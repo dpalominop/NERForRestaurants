@@ -17,8 +17,8 @@ from model import EntityModel
 
 
 def process_data(data_path):
-    df = pd.read_csv(data_path, encondig="latin-1")
-    df.loc[:, "Senetence #"] = df["Senetence #"].fillna(method="ffill")
+    df = pd.read_csv(data_path, encoding="latin-1")
+    df.loc[:, "Sentence #"] = df["Sentence #"].fillna(method="ffill")
     
     enc_pos = preprocessing.LabelEncoder()
     enc_tag = preprocessing.LabelEncoder()
@@ -56,10 +56,10 @@ if __name__ == "__main__":
     ) = model_selection.train_test_split(sentences, pos, tag, random_state=42, test_size=0.1)
     
     train_dataset = dataset.EntityDataset(
-        text=train_sentences, pos=train_pos, tags=train_tag
+        texts=train_sentences, pos=train_pos, tags=train_tag
     )
     
-    train_data_loader = torch.utils.data.Dataloader(
+    train_data_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=config.TRAIN_BATCH_SIZE, num_workers=4
     )
     
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         texts=test_sentences, pos=test_pos, tags=test_tag
     )
     
-    valid_data_loader = dataset.EntityDataset(
+    valid_data_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
     )
     

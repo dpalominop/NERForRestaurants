@@ -4,7 +4,7 @@ import transformers
 import torch.nn as nn
 
 
-def loss_func(output, target, mask, num_labels):
+def loss_fn(output, target, mask, num_labels):
     lfn = nn.CrossEntropyLoss()
     active_loss = mask.view(-1) == 1
     active_logits = output.view(-1, num_labels)
@@ -16,10 +16,10 @@ def loss_func(output, target, mask, num_labels):
     loss = lfn(active_logits, active_labels)
     return loss
 
-class EntityModel(nn.Model):
-    def __init__(self, num_tags, num_pos):
+class EntityModel(nn.Module):
+    def __init__(self, num_tag, num_pos):
         super(EntityModel, self).__init__()
-        self.num_tags = num_tags
+        self.num_tag = num_tag
         self.num_pos = num_pos
         self.bert = transformers.BertModel.from_pretrained(config.BASE_MODEL_PATH)
         self.bert_drop_1 = nn.Dropout(0.3)

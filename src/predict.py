@@ -17,17 +17,18 @@ if __name__ == "__main__":
     num_pos = len(list(enc_pos.classes_))
     num_tag = len(list(enc_tag.classes_))
     
-    sentence = "Daniel is working in the challenge!"
-    toknized_sentence = config.TOKENIZER.encode(sentence)
+    sentence = "Daniel Palomino is working in the challenge! and You are resting"
+    tokenized_sentence = config.TOKENIZER.encode(sentence)
     
     sentence = sentence.split()
     print(sentence)
     print(tokenized_sentence)
+    print(config.TOKENIZER.decode(tokenized_sentence))
     
     test_dataset = dataset.EntityDataset(
         texts=[sentence],
         pos=[[0] * len(sentence)],
-        tag=[[0] * len(sentence)]
+        tags=[[0] * len(sentence)]
     )
     
     device = torch.device("cuda")
@@ -35,8 +36,8 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(config.MODEL_PATH))
     model.to(device)
     
-    with torhc.no_grad():
-        data = test_dataset()
+    with torch.no_grad():
+        data = test_dataset[0]
         for k, v in data.items():
             data[k] = v.to(device).unsqueeze(0)
         tag, pos, _=model(**data)

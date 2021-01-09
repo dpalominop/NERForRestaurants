@@ -29,7 +29,7 @@ class EntityDataset:
             input_len = len(inputs)
             ids.extend(inputs)
             target_pos.extend([pos[i]] * input_len)
-            target_tag.exten([tag[i]] * input_len)
+            target_tag.extend([tag[i]] * input_len)
             
         ids = ids[:config.MAX_LEN - 2]
         target_pos = target_pos[:config.MAX_LEN - 2]
