@@ -1,4 +1,5 @@
 import numpy as np
+import spacy
 
 import joblib
 import torch
@@ -9,46 +10,45 @@ import engine
 from model import EntityModel
 
 
+nlp = spacy.load("en_core_web_sm")
+
 if __name__ == "__main__":
-    meta_data = joblib.load("meta.bin")
-    enc_pos = meta_data["enc_pos"]
-    enc_tag = meta_data["enc_tag"]
+    RUN_PATH = config.BASE_MODEL_PATH+"/01.09.2021-23.40.39"
+    meta_data = joblib.load(RUN_PATH+"/meta.bin")
+    enc_tags = meta_data["enc_tags"]
     
-    num_pos = len(list(enc_pos.classes_))
-    num_tag = len(list(enc_tag.classes_))
+    num_tags = len(list(enc_tags.classes_))
     
-    sentence = "Daniel Palomino is working in the challenge! and You are resting"
+    sentence = "This place was really great!  I know all Teppanyaki places are very similar, and the \"show\" was typical.  But the food here really was fantastic!  Great fresh veggies and meat!  They also had a sautéed spinach that was part of the meal.  Never seen that before, but it was delicious!  Very reasonable, and large portions.  Their Sake Bombers were also pretty cheap.  Will return for sure!"
+    sentence = " ".join(sentence.split())
+    
+    word_pieces = [token.text for token in nlp(sentence)]
     tokenized_sentence = config.TOKENIZER.encode(sentence)
+    subword_pieces = [config.TOKENIZER.decode(token).replace(" ", "") for token in tokenized_sentence]
     
-    sentence = sentence.split()
     print(sentence)
+    print(word_pieces)
+    print(subword_pieces)
     print(tokenized_sentence)
-    print(config.TOKENIZER.decode(tokenized_sentence))
     
     test_dataset = dataset.EntityDataset(
-        texts=[sentence],
-        pos=[[0] * len(sentence)],
-        tags=[[0] * len(sentence)]
+        texts=[word_pieces],
+        tags=[[1] * len(word_pieces)]
     )
     
-    device = torch.device("cuda")
-    model = EntityModel(num_tag=num_tag, num_pos=num_pos)
-    model.load_state_dict(torch.load(config.MODEL_PATH))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = EntityModel(num_labels=num_tags)
+    model.load_state_dict(torch.load(RUN_PATH+"/ch_epoch_0.tar")["model_state_dict"])
     model.to(device)
     
     with torch.no_grad():
         data = test_dataset[0]
         for k, v in data.items():
             data[k] = v.to(device).unsqueeze(0)
-        tag, pos, _=model(**data)
+        loss, logits=model(**data)
         
         print(
-            enc_tag.inverse_transform(
-                tag.argmax(2).cpu().numpy().reshape(-1)
-            )[:len(tokenized_sentence)]
-        )
-        print(
-            enc_pos.inverse_transform(
-                pos.argmax(2).cpu().numpy().reshape(-1)
+            enc_tags.inverse_transform(
+                logits.argmax(2).cpu().numpy().reshape(-1)
             )[:len(tokenized_sentence)]
         )

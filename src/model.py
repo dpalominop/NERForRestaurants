@@ -24,11 +24,11 @@ class EntityModel(nn.Module):
         self.bert_drop = nn.Dropout(0.3)
         self.out_tags = nn.Linear(768, self.num_labels)
         
-    def forward(self, ids, mask, token_type_ids, target_tags):
+    def forward(self, ids, mask, token_type_ids, labels):
         o1, _ = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
         
         bo_tags = self.bert_drop(o1)
-        tags = self.out_tags(bo_tags)
-        loss = loss_fn(tags, target_tags, mask, self.num_tag)
+        logits = self.out_tags(bo_tags)
+        loss = loss_fn(logits, labels, mask, self.num_labels)
         
-        return tags, loss
+        return loss, logits

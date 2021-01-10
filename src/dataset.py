@@ -45,18 +45,18 @@ class EntityDataset:
         ids = ids + ([PAD] * padding_len)
         mask = mask + ([0] * padding_len)
         token_type_ids = token_type_ids + ([0] * padding_len)
-        target_tag = target_tag + ([0] * padding_len)
+        target_tags = target_tags + ([0] * padding_len)
         
         return {
             "ids": torch.tensor(ids, dtype=torch.long),
             "mask": torch.tensor(mask, dtype=torch.long),
             "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
-            "target_tag": torch.tensor(target_tag, dtype=torch.long)
+            "labels": torch.tensor(target_tags, dtype=torch.long)
         }
 
-class TransformerDataloader(torch.utils.data.DataLoader):
+class TransformerDataLoader(torch.utils.data.DataLoader):
     def __init__(self, texts, tags, batch_size=32, num_workers=1):
         entity_dataset = EntityDataset(texts, tags)
-        super(TransformerDataset, self).__init__(dataset=entity_dataset, batch_size=batch_size, num_workers=num_workers)
+        super(TransformerDataLoader, self).__init__(dataset=entity_dataset, batch_size=batch_size, num_workers=num_workers)
         
         

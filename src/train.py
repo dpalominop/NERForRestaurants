@@ -3,6 +3,7 @@ import numpy as np
 
 import joblib
 import torch
+import os
 
 from sklearn import preprocessing
 from sklearn import model_selection
@@ -22,7 +23,7 @@ def process_data(data_path):
     
     enc_tags = preprocessing.LabelEncoder()
     
-    df.loc[:, "Tag"] = enc_tag.fit_transform(df["Tag"])
+    df.loc[:, "Tag"] = enc_tags.fit_transform(df["Tag"])
     
     sentences = df.groupby("Sentence #")["Word"].apply(list).values
     tags = df.groupby("Sentence #")["Tag"].apply(list).values
@@ -31,15 +32,18 @@ def process_data(data_path):
 
 
 if __name__ == "__main__":
+    RUN_PATH = config.BASE_MODEL_PATH+f"/{config.THIS_RUN}"
+    os.mkdir(RUN_PATH)
+
     sentences, tags, enc_tags = process_data(config.TRAINING_FILE)
     
     meta_data = {
         "enc_tags": enc_tags
     }
     
-    joblib.dump(meta_data, "meta.bin")
+    joblib.dump(meta_data, RUN_PATH+"/meta.bin")
     
-    num_tags = len(list(enc_tag.classes_))
+    num_tags = len(list(enc_tags.classes_))
     
     (
         train_sentences,
@@ -82,12 +86,26 @@ if __name__ == "__main__":
         optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
     )
     
-    best_loss = np.inf
     for epoch in range(config.EPOCHS):
-        train_loss = engine.train_fn(train_data_loader, model, optimizer, device, schedule)
-        test_loss = engine.eval_fn(valid_data_loader, model, device)
-        print(f"[{epoch}]: Train Loss = {train_loss} - Valid Loss = {test_loss}")
-        if test_loss < best_loss:
-            torch.save(model.state_dict(), config.MODEL_PATH)
-            best_loss = test_loss
-    
+        tr_loss, tr_acc = engine.train_fn(train_data_loader, model, optimizer, device, schedule)
+        val_loss, val_acc, cl_report, conf_mat = engine.eval_fn(valid_data_loader, enc_tags, model, device)
+        print(f"[{epoch}]: Loss = {tr_loss} Acc = {tr_acc} / Val Loss = {val_loss} Val Acc = {val_acc}")
+        print(f"Classification Report:\n {cl_report}")
+        print(f"Confusion Matrix:\n {conf_mat}")
+            
+        # Save model and optimizer state_dict following every epoch
+        save_path = RUN_PATH+f"/ch_epoch_{epoch}.tar"
+        torch.save(
+            {
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "train_loss": tr_loss,
+                "train_acc": tr_acc,
+                "eval_loss": val_loss,
+                "eval_acc": val_acc,
+                "classification_report": cl_report,
+                "confusion_matrix": conf_mat,
+            },
+            save_path,
+        )
