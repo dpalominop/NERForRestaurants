@@ -12,3 +12,4 @@ TOKENIZER = transformers.BertTokenizer.from_pretrained(
     BASE_MODEL_PATH,
     do_lower_case = True
 )
+label_types = ["B-PER", "I-PER", "B-LOC", "I-LOC", "B-ORG", "I-ORG", "B-MISC", "I-MISC", "O"]

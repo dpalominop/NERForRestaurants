@@ -11,7 +11,7 @@ from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 
 import config
-import dataset
+from dataset import TransformerDataLoader
 import engine
 from model import EntityModel
 
@@ -20,60 +20,44 @@ def process_data(data_path):
     df = pd.read_csv(data_path, encoding="latin-1")
     df.loc[:, "Sentence #"] = df["Sentence #"].fillna(method="ffill")
     
-    enc_pos = preprocessing.LabelEncoder()
-    enc_tag = preprocessing.LabelEncoder()
+    enc_tags = preprocessing.LabelEncoder()
     
-    df.loc[:, "POS"] = enc_pos.fit_transform(df["POS"])
     df.loc[:, "Tag"] = enc_tag.fit_transform(df["Tag"])
     
     sentences = df.groupby("Sentence #")["Word"].apply(list).values
-    pos = df.groupby("Sentence #")["POS"].apply(list).values
-    tag = df.groupby("Sentence #")["Tag"].apply(list).values
+    tags = df.groupby("Sentence #")["Tag"].apply(list).values
     
-    return sentences, pos, tag, enc_pos, enc_tag
+    return sentences, tags, enc_tags
 
 
 if __name__ == "__main__":
-    sentences, pos, tag, enc_pos, enc_tag = process_data(config.TRAINING_FILE)
+    sentences, tags, enc_tags = process_data(config.TRAINING_FILE)
     
     meta_data = {
-        "enc_pos": enc_pos,
-        "enc_tag": enc_tag
+        "enc_tags": enc_tags
     }
     
     joblib.dump(meta_data, "meta.bin")
     
-    num_pos = len(list(enc_pos.classes_))
-    num_tag = len(list(enc_tag.classes_))
+    num_tags = len(list(enc_tag.classes_))
     
     (
         train_sentences,
         test_sentences,
-        train_pos,
-        test_pos,
-        train_tag,
-        test_tag
-    ) = model_selection.train_test_split(sentences, pos, tag, random_state=42, test_size=0.1)
+        train_tags,
+        test_tags
+    ) = model_selection.train_test_split(sentences, tags, random_state=42, test_size=0.1)
     
-    train_dataset = dataset.EntityDataset(
-        texts=train_sentences, pos=train_pos, tags=train_tag
-    )
+    train_data_loader = TransformerDataLoader(texts=train_sentences, tags=train_tags, 
+                                              batch_size=config.TRAIN_BATCH_SIZE, num_workers=4)
+    valid_data_loader = TransformerDataLoader(texts=test_sentences, tags=test_tags, 
+                                              batch_size=config.VALID_BATCH_SIZE, num_workers=1)
+    print("Loaded training and validation data into DataLoaders.")
     
-    train_data_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=config.TRAIN_BATCH_SIZE, num_workers=4
-    )
-    
-    valid_dataset = dataset.EntityDataset(
-        texts=test_sentences, pos=test_pos, tags=test_tag
-    )
-    
-    valid_data_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=config.VALID_BATCH_SIZE, num_workers=1
-    )
-    
-    device = torch.device("cuda")
-    model = EntityModel(num_tag=num_tag, num_pos=num_pos)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = EntityModel(num_labels=num_tags)
     model.to(device)
+    print(f"Initialized model and moved it to {device}.")
     
     param_optimizer = list(model.named_parameters())
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
@@ -91,8 +75,8 @@ if __name__ == "__main__":
             "weight_decay": 0.0,
         }
     ]
-    
     num_train_steps = int(len(train_sentences) / config.TRAIN_BATCH_SIZE * config.EPOCHS)
+
     optimizer = AdamW(optimizer_parameters, lr=3e-5)
     schedule = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
