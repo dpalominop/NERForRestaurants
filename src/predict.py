@@ -7,13 +7,13 @@ import torch
 import config
 import dataset
 import engine
-from model import EntityModel
+from model import BertModel
 
 
 nlp = spacy.load("en_core_web_sm")
 
 if __name__ == "__main__":
-    RUN_PATH = config.BASE_MODEL_PATH+"/01.09.2021-23.40.39"
+    RUN_PATH = config.BASE_MODEL_PATH+"/finetuned"
     meta_data = joblib.load(RUN_PATH+"/meta.bin")
     enc_tags = meta_data["enc_tags"]
     
@@ -37,8 +37,8 @@ if __name__ == "__main__":
     )
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = EntityModel(num_labels=num_tags)
-    model.load_state_dict(torch.load(RUN_PATH+"/ch_epoch_0.tar")["model_state_dict"])
+    model = BertModel(num_labels=num_tags)
+    model.load_state_dict(torch.load(RUN_PATH+"/ch_epoch_9.tar")["model_state_dict"])
     model.to(device)
     
     with torch.no_grad():

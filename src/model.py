@@ -16,19 +16,39 @@ def loss_fn(output, target, mask, num_labels):
     loss = lfn(active_logits, active_labels)
     return loss
 
-class EntityModel(nn.Module):
+
+class BertModel(nn.Module):
     def __init__(self, num_labels):
-        super(EntityModel, self).__init__()
+        super(BertModel, self).__init__()
+        
         self.num_labels = num_labels
-        self.bert = transformers.BertModel.from_pretrained(config.BASE_MODEL_PATH)
-        self.bert_drop = nn.Dropout(0.3)
-        self.out_tags = nn.Linear(768, self.num_labels)
+        
+        if config.BERT_ARCH == "BertForMaskedLM":
+            self.bert = transformers.BertModel.from_pretrained(config.BASE_MODEL_PATH)
+            self.dropout = nn.Dropout(0.3)
+            self.classifier = nn.Linear(self.bert.bert.pooler.dense.out_features, self.num_labels)
+
+        if config.BERT_ARCH == "BertForTokenClassification":
+            self.bert = transformers.BertForTokenClassification.from_pretrained(config.BASE_MODEL_PATH, num_labels=9)
+            self.bert.classifier = nn.Linear(self.bert.classifier.in_features, self.num_labels, bias=True)
+            self.bert.num_labels = self.num_labels
         
     def forward(self, ids, mask, token_type_ids, labels):
-        o1, _ = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)
+        loss, logits = [], []
         
-        bo_tags = self.bert_drop(o1)
-        logits = self.out_tags(bo_tags)
-        loss = loss_fn(logits, labels, mask, self.num_labels)
+        if config.BERT_ARCH == "BertForMaskedLM":
+            output, _ = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)        
+            output_dropped = self.dropout(output)
+            logits = self.classifier(output_dropped)
+            loss = loss_fn(logits, labels, mask, self.num_labels)
+
+        if config.BERT_ARCH == "BertForTokenClassification":
+            outputs = self.bert(
+                    ids,
+                    token_type_ids=None,
+                    attention_mask=mask,
+                    labels=labels,
+                )
+            loss, logits = outputs[:2]
         
         return loss, logits

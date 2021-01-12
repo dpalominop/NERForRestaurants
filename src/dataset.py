@@ -54,9 +54,9 @@ class EntityDataset:
             "labels": torch.tensor(target_tags, dtype=torch.long)
         }
 
-class TransformerDataLoader(torch.utils.data.DataLoader):
+class BertDataLoader(torch.utils.data.DataLoader):
     def __init__(self, texts, tags, batch_size=32, num_workers=1):
         entity_dataset = EntityDataset(texts, tags)
-        super(TransformerDataLoader, self).__init__(dataset=entity_dataset, batch_size=batch_size, num_workers=num_workers)
+        super(BertDataLoader, self).__init__(dataset=entity_dataset, batch_size=batch_size, num_workers=num_workers)
         
         

@@ -12,23 +12,21 @@ from transformers import AdamW
 from transformers import get_linear_schedule_with_warmup
 
 import config
-from dataset import TransformerDataLoader
+from dataset import BertDataLoader
 import engine
-from model import EntityModel
+from model import BertModel
 
 
 def process_data(data_path):
     df = pd.read_csv(data_path, encoding="latin-1")
-    df.loc[:, "Sentence #"] = df["Sentence #"].fillna(method="ffill")
-    
     enc_tags = preprocessing.LabelEncoder()
     
     df.loc[:, "Tag"] = enc_tags.fit_transform(df["Tag"])
     
-    sentences = df.groupby("Sentence #")["Word"].apply(list).values
-    tags = df.groupby("Sentence #")["Tag"].apply(list).values
+    sentences = df.groupby("Id")["Word"].apply(list).values
+    tags = df.groupby("Id")["Tag"].apply(list).values
     
-    return sentences, tags, enc_tags
+    return sentences[0:110], tags[0:110], enc_tags
 
 
 if __name__ == "__main__":
@@ -52,14 +50,14 @@ if __name__ == "__main__":
         test_tags
     ) = model_selection.train_test_split(sentences, tags, random_state=42, test_size=0.1)
     
-    train_data_loader = TransformerDataLoader(texts=train_sentences, tags=train_tags, 
+    train_data_loader = BertDataLoader(texts=train_sentences, tags=train_tags, 
                                               batch_size=config.TRAIN_BATCH_SIZE, num_workers=4)
-    valid_data_loader = TransformerDataLoader(texts=test_sentences, tags=test_tags, 
+    valid_data_loader = BertDataLoader(texts=test_sentences, tags=test_tags, 
                                               batch_size=config.VALID_BATCH_SIZE, num_workers=1)
     print("Loaded training and validation data into DataLoaders.")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = EntityModel(num_labels=num_tags)
+    model = BertModel(num_labels=num_tags)
     model.to(device)
     print(f"Initialized model and moved it to {device}.")
     
