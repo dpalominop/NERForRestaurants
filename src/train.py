@@ -4,6 +4,7 @@ import numpy as np
 import joblib
 import torch
 import os
+import shutil
 
 from sklearn import preprocessing
 from sklearn import model_selection
@@ -31,16 +32,11 @@ def process_data(data_path):
 
 if __name__ == "__main__":
     RUN_PATH = config.BASE_MODEL_PATH+f"/{config.THIS_RUN}"
+    if os.path.exists(RUN_PATH):
+        shutil.rmtree(RUN_PATH)
     os.mkdir(RUN_PATH)
 
     sentences, tags, enc_tags = process_data(config.TRAINING_FILE)
-    
-    meta_data = {
-        "enc_tags": enc_tags
-    }
-    
-    joblib.dump(meta_data, RUN_PATH+"/meta.bin")
-    
     num_tags = len(list(enc_tags.classes_))
     
     (
@@ -57,7 +53,7 @@ if __name__ == "__main__":
     print("Loaded training and validation data into DataLoaders.")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = BertModel(num_labels=num_tags)
+    model = BertModel(config.BASE_MODEL_PATH, num_labels=num_tags)
     model.to(device)
     print(f"Initialized model and moved it to {device}.")
     
@@ -86,24 +82,11 @@ if __name__ == "__main__":
     
     for epoch in range(config.EPOCHS):
         tr_loss, tr_acc = engine.train_fn(train_data_loader, model, optimizer, device, schedule)
-        val_loss, val_acc, cl_report, conf_mat = engine.eval_fn(valid_data_loader, enc_tags, model, device)
+        val_loss, val_acc, cl_report, _ = engine.eval_fn(valid_data_loader, enc_tags, model, device)
         print(f"[{epoch}]: Loss = {tr_loss} Acc = {tr_acc} / Val Loss = {val_loss} Val Acc = {val_acc}")
         print(f"Classification Report:\n {cl_report}")
-        print(f"Confusion Matrix:\n {conf_mat}")
             
-        # Save model and optimizer state_dict following every epoch
-        save_path = RUN_PATH+f"/ch_epoch_{epoch}.tar"
-        torch.save(
-            {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "train_loss": tr_loss,
-                "train_acc": tr_acc,
-                "eval_loss": val_loss,
-                "eval_acc": val_acc,
-                "classification_report": cl_report,
-                "confusion_matrix": conf_mat,
-            },
-            save_path,
-        )
+        if epoch == config.EPOCHS-1:
+            # Save model and config
+            model.set_config(enc_tags)
+            model.bert.save_pretrained(RUN_PATH)

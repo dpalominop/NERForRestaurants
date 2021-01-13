@@ -1,4 +1,3 @@
-import config
 import torch
 import transformers
 import torch.nn as nn
@@ -18,35 +17,44 @@ def loss_fn(output, target, mask, num_labels):
 
 
 class BertModel(nn.Module):
-    def __init__(self, num_labels):
+    def __init__(self, model_path, num_labels):
         super(BertModel, self).__init__()
-        
+        self.arch = transformers.BertConfig.from_pretrained(
+            model_path
+        ).architectures[0]
         self.num_labels = num_labels
         
-        if config.BERT_ARCH == "BertForMaskedLM":
-            self.bert = transformers.BertModel.from_pretrained(config.BASE_MODEL_PATH)
-            self.dropout = nn.Dropout(0.3)
-            self.classifier = nn.Linear(self.bert.bert.pooler.dense.out_features, self.num_labels)
+        if self.arch == "BertForMaskedLM":
+            self.bert = transformers.BertForTokenClassification.from_pretrained(model_path, num_labels=self.num_labels)
 
-        if config.BERT_ARCH == "BertForTokenClassification":
-            self.bert = transformers.BertForTokenClassification.from_pretrained(config.BASE_MODEL_PATH, num_labels=9)
+        if self.arch == "BertForTokenClassification":
+            self.bert = transformers.BertForTokenClassification.from_pretrained(model_path)
             self.bert.classifier = nn.Linear(self.bert.classifier.in_features, self.num_labels, bias=True)
             self.bert.num_labels = self.num_labels
+            
+    def set_config(self, enc_tags):
+        assert (self.num_labels == len(list(enc_tags.classes_))), "Number of clases in encoder of tags dont match num_labels"
         
-    def forward(self, ids, mask, token_type_ids, labels):
+        self.bert.config.num_labels = self.num_labels
+        self.bert.config.architectures[0] = "BertForTokenClassification"
+        self.bert.config.id2label = {str(i):c for i,c in enumerate(enc_tags.classes_)}
+        self.bert.config.label2id = {c:str(i) for i,c in enumerate(enc_tags.classes_)}
+        
+    def forward(self, input_ids, attention_mask, token_type_ids, labels):
         loss, logits = [], []
         
-        if config.BERT_ARCH == "BertForMaskedLM":
-            output, _ = self.bert(ids, attention_mask=mask, token_type_ids=token_type_ids)        
-            output_dropped = self.dropout(output)
-            logits = self.classifier(output_dropped)
-            loss = loss_fn(logits, labels, mask, self.num_labels)
+        if self.arch == "BertForMaskedLM":
+            output = self.bert(input_ids=input_ids,
+                               attention_mask=attention_mask,
+                               token_type_ids=token_type_ids)
+            logits = output.logits
+            loss = loss_fn(logits, labels, attention_mask, self.num_labels)
 
-        if config.BERT_ARCH == "BertForTokenClassification":
+        if self.arch == "BertForTokenClassification":
             outputs = self.bert(
-                    ids,
-                    token_type_ids=None,
-                    attention_mask=mask,
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    token_type_ids=token_type_ids,
                     labels=labels,
                 )
             loss, logits = outputs[:2]

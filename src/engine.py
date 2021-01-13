@@ -20,9 +20,9 @@ def train_fn(data_loader, model, optimizer, device, scheduler):
         
         # Subset out unwanted predictions on CLS/PAD/SEP tokens
         preds_mask = (
-            (data["ids"] != CLS)
-            & (data["ids"] != PAD)
-            & (data["ids"] != SEP)
+            (data["input_ids"] != CLS)
+            & (data["input_ids"] != PAD)
+            & (data["input_ids"] != SEP)
         )
         
 #         tr_logits = tr_logits.detach().cpu().numpy()
@@ -63,9 +63,9 @@ def eval_fn(data_loader, enc_tags, model, device):
         
         # Subset out unwanted predictions on CLS/PAD/SEP tokens
         preds_mask = (
-            (data["ids"] != CLS)
-            & (data["ids"] != PAD)
-            & (data["ids"] != SEP)
+            (data["input_ids"] != CLS)
+            & (data["input_ids"] != PAD)
+            & (data["input_ids"] != SEP)
         )
         
 #         val_logits = val_logits.detach().cpu().numpy()

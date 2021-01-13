@@ -1,0 +1,20 @@
+# path to models (relative to demo.py)
+models_path:         'models/'
+
+label_types:
+    - "B-RES"
+    - "I-RES"
+    - "B-DIS"
+    - "I-DIS"
+    - "B-OCC"
+    - "I-OCC"
+    - "O"
+
+# pred_type: [dark_highlight, light_highlight]
+demo_colors:
+  res: ["#17becf", "#9edae5"] # blues
+  dis: ["#9467bd", "#c5b0d5"] # purples
+  occ: ["#74c476", "#c7e9c0"] # greens
+#   misc: ["#e377c2", "#f7b6d2"] # pinks
+
+default_text: "I ate some tacos"

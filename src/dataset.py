@@ -48,8 +48,8 @@ class EntityDataset:
         target_tags = target_tags + ([0] * padding_len)
         
         return {
-            "ids": torch.tensor(ids, dtype=torch.long),
-            "mask": torch.tensor(mask, dtype=torch.long),
+            "input_ids": torch.tensor(ids, dtype=torch.long),
+            "attention_mask": torch.tensor(mask, dtype=torch.long),
             "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
             "labels": torch.tensor(target_tags, dtype=torch.long)
         }
