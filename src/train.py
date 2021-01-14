@@ -27,7 +27,7 @@ def process_data(data_path):
     sentences = df.groupby("Id")["Word"].apply(list).values
     tags = df.groupby("Id")["Tag"].apply(list).values
     
-    return sentences[0:110], tags[0:110], enc_tags
+    return sentences[0:141], tags[0:141], enc_tags
 
 
 if __name__ == "__main__":
