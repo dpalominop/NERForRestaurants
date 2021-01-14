@@ -7,7 +7,6 @@ import transformers
 import config
 import dataset
 import engine
-# from model import BertModel
 
 
 nlp = spacy.load("en_core_web_sm")

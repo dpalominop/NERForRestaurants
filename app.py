@@ -85,5 +85,5 @@ if __name__ == "__main__":
     # Display fine-grained model prediction columns for selected entity
     mask = (bert_preds[f"B-RES"].values > 0) | (bert_preds[f"I-RES"].values > 0) | \
             (bert_preds[f"B-DIS"].values > 0) | (bert_preds[f"I-DIS"].values > 0) | \
-            (bert_preds[f"I-OCC"].values > 0) | (bert_preds[f"I-OCC"].values > 0)
+            (bert_preds[f"B-OCC"].values > 0) | (bert_preds[f"I-OCC"].values > 0)
     st.table(bert_preds[mask][["text", f"B-RES", f"I-RES", f"B-DIS", f"I-DIS", f"B-OCC", f"I-OCC"]])
