@@ -2,20 +2,20 @@
 This project use Name Entity Recognition to get insights from Restaurants' reviews.
 
 ## Requeriments
-- python==3.6.8
-- numpy==1.18.1
-- pandas==1.0.3
-- torch==1.4.0
-- transformers==2.11.0
+- python==3.7.0
+- numpy==1.19.2
+- pandas==1.2.0
+- pytorch==1.7.1
+- transformers==4.2.0
 - streamlit==0.74.1
 
-(*) For a complete revision, please check *requeriments.txt* file.
+(*) For a complete revision, please check *environment.yml* file.
 
 ## Virtualenv
 
 ### Tested Operative System:
 
-- Windows 10: Error in use of python OS library.
+- Windows 10: OK
 - All linux-based os: OK
 
 ### Steps
@@ -25,7 +25,7 @@ This project use Name Entity Recognition to get insights from Restaurants' revie
     ```git clone https://github.com/dpalominop/NERForRestaurants.git && cd NERForRestaurants```
 2. Create and activate a virtual environment (I recommend to use conda):
 
-    ```conda create --name ner --file requirements.txt```
+    ```conda create --name ner --file environment.yml```
     
     ```conda activate ner```
 3. Run the web application:
@@ -61,9 +61,9 @@ This project use Name Entity Recognition to get insights from Restaurants' revie
 
     ```python predict.py```
     
-### Demo
+# Demo
 
-Temporarily, the web application will be hosted in https://b253967d28b0.ngrok.io
+Temporarily, the web application will be hosted in https://904a50b9ac10.ngrok.io
 
 # Help?
 
