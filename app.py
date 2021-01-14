@@ -29,7 +29,7 @@ if __name__ == "__main__":
         cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
     # App functionality code begins here
-    st.title("NER For Restauntant's Reviews")
+    st.title("NER For Restauntants' Reviews")
 
     # Switch between devel and deploy models
     available_chkpts = []
