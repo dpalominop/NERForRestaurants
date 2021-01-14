@@ -79,13 +79,13 @@ if __name__ == "__main__":
     schedule = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=num_train_steps
     )
-    
+
     for epoch in range(config.EPOCHS):
         tr_loss, tr_acc = engine.train_fn(train_data_loader, model, optimizer, device, schedule)
-        val_loss, val_acc, cl_report, _ = engine.eval_fn(valid_data_loader, enc_tags, model, device)
+        val_loss, val_acc, cl_report = engine.eval_fn(valid_data_loader, enc_tags, model, device)
         print(f"[{epoch}]: Loss = {tr_loss} Acc = {tr_acc} / Val Loss = {val_loss} Val Acc = {val_acc}")
         print(f"Classification Report:\n {cl_report}")
-            
+
         if epoch == config.EPOCHS-1:
             # Save model and config
             model.set_config(enc_tags)

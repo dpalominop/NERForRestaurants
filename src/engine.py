@@ -84,10 +84,10 @@ def eval_fn(data_loader, enc_tags, model, device):
     # Compute validation reports
     pred_tags = enc_tags.inverse_transform(val_preds)
     val_tags = enc_tags.inverse_transform(val_labels)
+
     cl_report = classification_report(val_tags, pred_tags)
-    conf_mat = None #annot_confusion_matrix(val_tags, pred_tags)
 
     val_loss = val_loss / len(data_loader)
     val_accuracy = val_accuracy / len(data_loader)
         
-    return val_loss, val_accuracy, cl_report, conf_mat
+    return val_loss, val_accuracy, cl_report
