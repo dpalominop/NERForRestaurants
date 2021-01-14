@@ -63,7 +63,7 @@ This project use Name Entity Recognition to get insights from Restaurants' revie
     
 # Demo
 
-Temporarily, the web application will be hosted in https://904a50b9ac10.ngrok.io
+Temporarily, the web application will be hosted in https://653a555467d7.ngrok.io
 
 # Help?
 
