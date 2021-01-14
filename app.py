@@ -31,13 +31,22 @@ if __name__ == "__main__":
     # App functionality code begins here
     st.title("NER For Restauntant's Reviews")
 
-    available_chkpts = [
-        f"models/{dir}/finetuned/" + chkpt
-        for dir in os.listdir("models/")
-        if dir not in [".keep", ".ipynb_checkpoints"] and os.listdir(f"models/{dir}/finetuned/")
-        for chkpt in os.listdir(f"models/{dir}/finetuned/") if dir not in ["config.json", ".ipynb_checkpoints"]
-    ]
-    
+    # Switch between devel and deploy models
+    available_chkpts = []
+    if cfg["stage"] == "deploy":
+        hf_model = cfg["model_to_deploy"]
+        hf_model_path = f"models/"+hf_model.split("/")[1]
+        if not os.path.exists(hf_model_path):
+            os.system(f"cd models && git lfs install && git clone https://huggingface.co/{hf_model}")
+        available_chkpts.extend([hf_model_path])
+    else:
+        available_chkpts.extend([
+            f"models/{dir}/finetuned/" + chkpt
+            for dir in os.listdir("models/")
+            if dir not in [".keep", ".ipynb_checkpoints"] and os.path.exists(f"models/{dir}/finetuned/") and os.listdir(f"models/{dir}/finetuned/")
+            for chkpt in os.listdir(f"models/{dir}/finetuned/") if chkpt not in ["config.json", ".ipynb_checkpoints"]
+        ])
+
     # Create selectbox for users to select checkpoint
     CHK_PATH = st.selectbox("Model checkpoint:", tuple(available_chkpts))
 

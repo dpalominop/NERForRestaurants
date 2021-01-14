@@ -46,7 +46,7 @@ def get_bert_pred_df(model, tokenizer, input_text, label_types):
         return None
 
 @st.cache()
-def load_model_and_tokenizer(chk_path, state_dict_name="model_state_dict"):
+def load_model_and_tokenizer(chk_path, stage="devel"):
 
     """
     Loads model from a specified checkpoint path. Replace `CHK_PATH` at the top of
@@ -54,10 +54,16 @@ def load_model_and_tokenizer(chk_path, state_dict_name="model_state_dict"):
     (Checkpoint must include a model state_dict, which by default is specified as
     'model_state_dict,' as it is in the `main.py` script.)
     """
-
-    model_path = "/".join(chk_path.split("/")[:-1])
-    token_path = "/".join(chk_path.split("/")[:-2])
     
+    model_path = ""
+    token_path = ""
+    if stage == "deploy":
+        model_path = chk_path
+        token_path = chk_path
+    else:
+        model_path = "/".join(chk_path.split("/")[:-1])
+        token_path = "/".join(chk_path.split("/")[:-2])
+
     model = BertForTokenClassification.from_pretrained(model_path)
     tokenizer = BertTokenizer.from_pretrained(token_path, do_lower_case=False)
 
@@ -73,9 +79,9 @@ class LanguageResourceManager:
     def __init__(self, config, chk_path):
         self.label_types = config["label_types"]
         self.num_labels = len(self.label_types)
-        
+
         self.bert_model, self.bert_tokenizer = load_model_and_tokenizer(
-            chk_path
+            chk_path, stage=config["stage"]
         )
 
     def get_preds(self, input_text):
