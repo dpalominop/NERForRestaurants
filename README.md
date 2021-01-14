@@ -37,7 +37,7 @@ This project use Name Entity Recognition to get insights from Restaurants' revie
 
 ### Only Development Mode
 
-(*) These step are intended only to pretrain o finetune a model from a previous one. You could check https://huggingface.com/models for more information.
+(*) These step are intended only to pretrain o finetune a model from a previous one.
 
 1. Open config.yml and change value of stage to devel:
 
